@@ -1,5 +1,6 @@
 package com.example.e_commerce.Adapters
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +12,7 @@ import com.bumptech.glide.Glide
 import com.example.e_commerce.R
 import com.example.e_commerce.Retrofit.Product
 
-class ProductAdapter(private val categoryData: List<Product>?):
+class ProductAdapter(private var categoryData: MutableList<Product>?):
     RecyclerView.Adapter<ProductAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -29,6 +30,7 @@ class ProductAdapter(private val categoryData: List<Product>?):
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = categoryData?.get(position)
+//        val data = categoryData?.get(holder.adapterPosition)
         if (data != null) {
             holder.Title.text = data.title
             holder.Brand.text = data.brand
@@ -45,5 +47,16 @@ class ProductAdapter(private val categoryData: List<Product>?):
 
     override fun getItemCount(): Int {
         return categoryData!!.size
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun addData(newData: List<Product>?) {
+        if (categoryData == null) {
+            categoryData = mutableListOf()
+        }
+        newData?.let {
+            categoryData?.addAll(it)
+            notifyDataSetChanged()
+        }
     }
 }

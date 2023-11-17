@@ -27,18 +27,39 @@ class ProductFragment : Fragment() {
     }
     private var subCategory: String? = null
     private lateinit var recyclerView: RecyclerView
+    private var currentPage: Int = 0
+    private var isLoading: Boolean = false
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // Inflate the layout for this fragment
         val view: View = inflater.inflate(R.layout.fragment_product, container, false)
 
         recyclerView = view.findViewById(R.id.product_rv)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
+
+        currentPage = 0
+
         // Retrieve the subcategory from arguments
         subCategory = arguments?.getString("category")
+
+        recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val visibleItemCount = layoutManager.childCount
+                val totalItemCount = layoutManager.itemCount
+                val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+
+                if (!isLoading && (visibleItemCount + firstVisibleItemPosition) >= totalItemCount
+                    && firstVisibleItemPosition >= 0) {
+                    // Load next page when reaching the end
+                    loadNextPage(subCategory)
+                }
+            }
+        })
 
         // Make API call with the dynamic subcategory
         makeApiCall(subCategory)
@@ -47,7 +68,7 @@ class ProductFragment : Fragment() {
 
     private fun makeApiCall(subCategory: String?) {
         val apiService = RetrofitInstance.retrofit.create(ApiService::class.java)
-        val call = apiService.getCategoryData(subCategory ?: "")
+        val call = apiService.getCategoryData(subCategory ?: "", 5, currentPage * 5)
 
         call.enqueue(object : Callback<CategoryResponse> {
             override fun onResponse(call: Call<CategoryResponse>, response: Response<CategoryResponse>) {
@@ -59,17 +80,26 @@ class ProductFragment : Fragment() {
                     if (categoryData != null) {
                         val adapter = ProductAdapter(categoryData)
                         recyclerView.adapter = adapter
+                        adapter.addData(categoryData)
+                        currentPage++
                     }
                 } else {
                     // Handle error
                     // You can check the response code and handle accordingly
                 }
+                isLoading = false
             }
 
             override fun onFailure(call: Call<CategoryResponse>, t: Throwable) {
                 // Handle failure
+                isLoading = false
                 // This is called when there is a network error or the server returns an error response
             }
         })
+    }
+
+    private fun loadNextPage(subCategory: String?) {
+        isLoading = true
+        makeApiCall(subCategory)
     }
 }
