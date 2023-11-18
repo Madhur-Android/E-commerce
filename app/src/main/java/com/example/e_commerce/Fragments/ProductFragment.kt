@@ -1,5 +1,6 @@
 package com.example.e_commerce.Fragments
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -8,13 +9,14 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.e_commerce.Adapters.ProductAdapter
+import com.example.e_commerce.ProductDetailActivity
 import com.example.e_commerce.R
 import com.example.e_commerce.Retrofit.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
-class ProductFragment : Fragment() {
+class ProductFragment : Fragment(), ProductAdapter.ProductItemClickListener {
 
     companion object {
         fun newInstance(category: String): ProductFragment {
@@ -38,11 +40,10 @@ class ProductFragment : Fragment() {
 
         recyclerView = view.findViewById(R.id.product_rv)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
-
         currentPage = 0
-
-        // Retrieve the subcategory from arguments
         subCategory = arguments?.getString("category")
+
+
 
         recyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
@@ -55,13 +56,11 @@ class ProductFragment : Fragment() {
 
                 if (!isLoading && (visibleItemCount + firstVisibleItemPosition) >= totalItemCount
                     && firstVisibleItemPosition >= 0) {
-                    // Load next page when reaching the end
                     loadNextPage(subCategory)
                 }
             }
         })
 
-        // Make API call with the dynamic subcategory
         makeApiCall(subCategory)
         return view
     }
@@ -78,22 +77,20 @@ class ProductFragment : Fragment() {
                     val categoryData = categoryResponse?.products
 
                     if (categoryData != null) {
-                        val adapter = ProductAdapter(categoryData)
+                        val adapter = ProductAdapter(categoryData, this@ProductFragment)
                         recyclerView.adapter = adapter
                         adapter.addData(categoryData)
                         currentPage++
+
+
                     }
                 } else {
-                    // Handle error
-                    // You can check the response code and handle accordingly
                 }
                 isLoading = false
             }
 
             override fun onFailure(call: Call<CategoryResponse>, t: Throwable) {
-                // Handle failure
                 isLoading = false
-                // This is called when there is a network error or the server returns an error response
             }
         })
     }
@@ -102,4 +99,11 @@ class ProductFragment : Fragment() {
         isLoading = true
         makeApiCall(subCategory)
     }
+
+    override fun onProductItemClick(product: Product) {
+        val intent = Intent(requireContext(), ProductDetailActivity::class.java)
+        intent.putExtra(ProductDetailActivity.PRODUCT_KEY, product)
+        startActivity(intent)
+    }
+
 }

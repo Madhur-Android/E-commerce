@@ -1,6 +1,7 @@
 package com.example.e_commerce.Fragments
 
 import android.annotation.SuppressLint
+import androidx.fragment.app.FragmentManager
 import android.content.res.Configuration
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -22,6 +23,7 @@ import retrofit2.Response
 class HomeFragment : Fragment() {
 
     private lateinit var recyclerView: RecyclerView
+    private lateinit var myChildFragmentManager: FragmentManager
 
     @SuppressLint("UseSwitchCompatOrMaterialCode")
     override fun onCreateView(
@@ -34,6 +36,8 @@ class HomeFragment : Fragment() {
         recyclerView = view.findViewById(R.id.category_rv)
 
         recyclerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+
+        myChildFragmentManager = requireActivity().supportFragmentManager // Update this line
 
 //        CategoryCall()
 
@@ -66,7 +70,7 @@ class HomeFragment : Fragment() {
                 if (response.isSuccessful) {
                     val categories = response.body()
                     if (categories != null) {
-                        val adapter = CategoriesAdapter(categories, requireFragmentManager())
+                        val adapter = CategoriesAdapter(categories, myChildFragmentManager)
                         recyclerView.adapter = adapter
                     }
                 } else {
